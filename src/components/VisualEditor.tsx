@@ -775,6 +775,7 @@ class VisualEditor extends Component<any, InternalState> {
           onCancel={(visible: boolean) => this.handleLinkCancel(visible)}
         />
       </Content>
+      <p></p>
     );
   }
 }
