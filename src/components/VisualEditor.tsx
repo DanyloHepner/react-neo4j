@@ -4,7 +4,6 @@ import React, { Component, SyntheticEvent } from "react";
 
 import { ApiService } from "../services/ApiService";
 import { ColorTheme, sortBy } from "../utils";
-import DrawerTools from "./DrawerTools";
 import LinkModal from "./LinkModal";
 import Loading from "./Loading";
 import NodeModal from "./NodeModal";
@@ -17,7 +16,6 @@ const { Content } = Layout;
 
 interface InternalState {
   loading: boolean;
-  showDrawerTools: boolean;
   addNodeLoading: boolean;
   editNodeLoading: boolean;
   showAddLinkModal: boolean;
@@ -43,7 +41,6 @@ class VisualEditor extends Component<any, InternalState> {
       loading: true,
       selectedNode: null,
       selectedLink: null,
-      showDrawerTools: false,
       addNodeLoading: false,
       editNodeLoading: false,
       showAddLinkModal: false,
@@ -400,12 +397,10 @@ class VisualEditor extends Component<any, InternalState> {
         circle.attr("stroke-width", 0);
         node.attr("class", "node");
         this.removeButtonGroup(node);
-        this.setState({ showDrawerTools: false });
       } else {
         circle.attr("stroke-width", 12).attr("stroke", ColorTheme.Cyan);
         node.attr("class", "node selected");
         this.addButtonGroup(node);
-        this.setState({ showDrawerTools: true });
       }
 
       this.setState({ selectedNode: d });
@@ -737,7 +732,6 @@ class VisualEditor extends Component<any, InternalState> {
       showAddLinkModal,
       addNodeLoading,
       editNodeLoading,
-      showDrawerTools,
     } = this.state;
 
     if (this.state.loading) {
@@ -779,11 +773,6 @@ class VisualEditor extends Component<any, InternalState> {
           data={selectedLink}
           onOk={() => this.handleLinkOk()}
           onCancel={(visible: boolean) => this.handleLinkCancel(visible)}
-        />
-        <DrawerTools
-          node={selectedNode}
-          visible={showDrawerTools}
-          onClose={() => this.setState({ showDrawerTools: false })}
         />
       </Content>
     );
