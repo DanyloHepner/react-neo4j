@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    {
+      "name": "Boss",
+      "id": 1
+    },
+    {
+      "name": "Vice Boss",
+      "id": 2
+    }
+  ],
+  "links": []
+}
