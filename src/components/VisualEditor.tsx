@@ -167,34 +167,6 @@ class VisualEditor extends Component<any, InternalState> {
   }
 
   public formatLinks() {
-    // if (!links || !(links && links.length > 0)) {
-    //   return [];
-    // }
-
-    // links.forEach((link: any) => {
-    //   const same = links.filter((d) => d.source === link.target && d.target === link.source);
-    //   const sameSelf = links.filter((d) => d.source === link.source && d.target === link.target);
-    //   const all = sameSelf.concat(same);
-
-    //   all.forEach((item: any, index: number) => {
-    //     item.sameIndex = index + 1;
-    //     item.sameTotal = all.length;
-    //     item.sameTotalHalf = item.sameTotal / 2;
-    //     item.sameUneven = item.sameTotal % 2 !== 0;
-    //     item.sameMiddleLink = item.sameUneven === true && Math.ceil(item.sameTotalHalf) === item.sameIndex;
-    //     item.sameLowerHalf = item.sameIndex <= item.sameTotalHalf;
-    //     item.sameArcDirection = 1;
-    //     item.sameIndexCorrected = item.sameLowerHalf ? item.sameIndex : item.sameIndex - Math.ceil(item.sameTotalHalf);
-    //   });
-    // });
-
-    // const maxSame = links.concat().sort(sortBy("sameTotal")).slice(-1)[0].sameTotal;
-
-    // links.forEach((link) => {
-    //   link.maxSameHalf = Math.round(maxSame / 2);
-    // });
-
-    // return links;
 
     const {links, all_graphs, graphs} =  this.state;
     
@@ -208,12 +180,42 @@ class VisualEditor extends Component<any, InternalState> {
         })
         graphs.push({
           id: graph.data.id,
-          denomination: graph.data.denomination,
+          denomination: graph.data.Nodedata.denomination,
           img: graph.data.img,
-          short_libelle_fonction: graph.data.short_libelle_fonction
+          short_libelle_fonction: graph.data.short_libelle_fonction,
+          color: graph.data.Nodedata.color
         })
       })
     })
+
+    if (!links || !(links && links.length > 0)) {
+      return [];
+    }
+
+    links.forEach((link: any) => {
+      const same = links.filter((d) => d.source === link.target && d.target === link.source);
+      const sameSelf = links.filter((d) => d.source === link.source && d.target === link.target);
+      const all = sameSelf.concat(same);
+
+      all.forEach((item: any, index: number) => {
+        item.sameIndex = index + 1;
+        item.sameTotal = all.length;
+        item.sameTotalHalf = item.sameTotal / 2;
+        item.sameUneven = item.sameTotal % 2 !== 0;
+        item.sameMiddleLink = item.sameUneven === true && Math.ceil(item.sameTotalHalf) === item.sameIndex;
+        item.sameLowerHalf = item.sameIndex <= item.sameTotalHalf;
+        item.sameArcDirection = 1;
+        item.sameIndexCorrected = item.sameLowerHalf ? item.sameIndex : item.sameIndex - Math.ceil(item.sameTotalHalf);
+      });
+    });
+
+    const maxSame = links.concat().sort(sortBy("sameTotal")).slice(-1)[0].sameTotal;
+
+    links.forEach((link) => {
+      link.maxSameHalf = Math.round(maxSame / 2);
+    });
+
+
     return links;
   }
 
@@ -360,8 +362,8 @@ class VisualEditor extends Component<any, InternalState> {
           .on("drag", (d) => this.onDragged(d))      
           .on("end", (d) => this.onDragEnded(d))
       );
-
-    graph.append("circle").attr("r", 40).attr("fill", ColorTheme.Cyan);
+      console.log(graph);
+    graph.append("circle").attr("r", 40).style("fill", (d:any, i:number) => d.color);
 
     graph
       .append("text")
@@ -388,7 +390,7 @@ class VisualEditor extends Component<any, InternalState> {
         return;
       }
 
-      graph.select("circle").attr("stroke", ColorTheme.Cyan).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
+      graph.select("circle").attr("stroke", (d:any, i:number) => d.color).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
     });
 
     graph.on("mouseleave", (d: any, i: number, n: any[]) => {

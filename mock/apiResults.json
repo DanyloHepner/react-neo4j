@@ -11,7 +11,8 @@
          },
          "Nodedata":{
             "denomination":"H 8 Invest",
-            "img":"company.png"
+            "img":"company.png",
+            "color": "red"
          },
          "children":[
             {
@@ -69,7 +70,8 @@
                   "parent_id":"0",
                   "slug":"",
                   "created_at":"2021-01-18 00:03:38",
-                  "updated_at":"2021-01-27 13:28:00"
+                  "updated_at":"2021-01-27 13:28:00",
+                  "color": "cyan"
                },
                "children":[
                   {
@@ -111,6 +113,7 @@
                         "img":"company.png",
                         "id":"6041512d43d9e",
                         "type":"input",
+                        "color": "yellow",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -155,6 +158,7 @@
                         "img":"company.png",
                         "id":"6041512d43da4",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -199,6 +203,7 @@
                         "img":"company.png",
                         "id":"6041512d43da6",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -243,6 +248,7 @@
                         "img":"company.png",
                         "id":"6041512d43da8",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -287,6 +293,7 @@
                         "img":"company.png",
                         "id":"6041512d43da9",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -331,6 +338,7 @@
                         "img":"company.png",
                         "id":"6041512d43daa",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -375,6 +383,7 @@
                         "img":"company.png",
                         "id":"6041512d43dab",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -419,6 +428,7 @@
                         "img":"company.png",
                         "id":"6041512d43dac",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -463,6 +473,7 @@
                         "img":"company.png",
                         "id":"6041512d43dad",
                         "type":"input",
+                        "color": "cyan",
                         "data":{
                            "label":"<NodeCus data={img:\"man.svg\",data1:\"data1Lv\",data2:\"data2Lv\",data3:\"data3Lv\",data4:\"data4Lv\" } \/>"
                         }
@@ -525,7 +536,8 @@
                   "parent_id":"0",
                   "slug":"",
                   "created_at":"2021-01-17 23:57:48",
-                  "updated_at":"2021-02-15 18:56:22"
+                  "updated_at":"2021-02-15 18:56:22",
+                  "color": "blue"
                }
             },
             {
@@ -577,6 +589,7 @@
                   "nb_mondat_actif":"0",
                   "quality":"0",
                   "parent_id":"0",
+                  "color": "cyan",
                   "created_at":"2021-01-24 16:07:27",
                   "updated_at":"2021-01-24 18:37:07"
                }
