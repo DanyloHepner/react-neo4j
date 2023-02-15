@@ -29,6 +29,7 @@ interface InternalState {
   graphs: any[];
   links: any[];
   scale: number;
+  all_graphs: any[];
 }
 
 class VisualEditor extends Component<any, InternalState> {
@@ -59,6 +60,7 @@ class VisualEditor extends Component<any, InternalState> {
       },
       graphs: [],
       links: [],
+      all_graphs: [],
       scale: 100,
     };
   }
@@ -66,7 +68,7 @@ class VisualEditor extends Component<any, InternalState> {
   public async componentDidMount() {
     const { data: graphs } = await ApiService.fetchGraphs();
     // const { data: links } = await ApiService.fetchLinks();
-
+    this.setState({all_graphs: graphs});
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
       this.initSimulation(el!, graphs, this.formatLinks());
@@ -80,7 +82,6 @@ class VisualEditor extends Component<any, InternalState> {
 
     const width = el.clientWidth;
     const height = el.clientHeight;
-    console.log(el.clientHeight, el.clientWidth);
 
     this.simulation = d3
       .forceSimulation(graphs)
@@ -109,7 +110,6 @@ class VisualEditor extends Component<any, InternalState> {
 
   public restartSimulation(e: SyntheticEvent) {
     e.stopPropagation();
-
     if (!this.simulation) {
       return;
     }
@@ -196,7 +196,19 @@ class VisualEditor extends Component<any, InternalState> {
 
     // return links;
 
-    const {links} =  this.state;
+    const {links, all_graphs} =  this.state;
+
+    all_graphs.map(graph => {
+      d3.hierarchy(graph).descendants().forEach(graph => {
+        if(graph.children) graph.children.forEach(child => {
+          links.push({
+            target: graph.id,
+            source: child.id
+          })
+        })
+
+      })
+    })
     return links;
   }
 
@@ -326,8 +338,7 @@ class VisualEditor extends Component<any, InternalState> {
       .attr("class", "layer graphs")
       .selectAll(".graph")
       .data(graphs, (d: any) => d);
-      console.log(svg);
-      console.log(graph);
+
     return this.createGraph(graph);
   }
 
@@ -349,19 +360,14 @@ class VisualEditor extends Component<any, InternalState> {
 
     graph
       .append("text")
-      .attr("dy", "5")
-      .attr("fill", "#ffffff")
+      .attr("dy", "55")
+      .attr("fill", "#000")
       .attr("pointer-events", "none")
       .attr("font-size", "12px")
       .attr("text-anchor", "middle")
-      .text((d: any) => {
-        if (d.name && d.name.length > 7) {
-          return d.name.slice(0, 7) + "...";
-        }
-        return d.name ? d.name : "";
-      });
+      .text((d: any) => d.denomination);
 
-    graph.append("title").text((d: any) => d.name);
+    // graph.append("title").text((d: any) => d.denomination);
 
     // init graph event
     this.initGraphEvent(graph);
@@ -380,15 +386,15 @@ class VisualEditor extends Component<any, InternalState> {
       graph.select("circle").attr("stroke", ColorTheme.Cyan).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
     });
 
-    // graph.on("mouseleave", (d: any, i: number, n: any[]) => {
-    //   const graph: any = d3.select(n[i]);
+    graph.on("mouseleave", (d: any, i: number, n: any[]) => {
+      const graph: any = d3.select(n[i]);
 
-    //   if (graph._groups[0][0].classList.contains("selected")) {
-    //     return;
-    //   }
+      if (graph._groups[0][0].classList.contains("selected")) {
+        return;
+      }
 
-    //   graph.select("circle").attr("stroke-width", 0);
-    // });
+      graph.select("circle").attr("stroke-width", 0);
+    });
 
 
     // graph.on("mouseover", (d: any, i: number, n: any[]) => {
