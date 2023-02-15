@@ -196,17 +196,22 @@ class VisualEditor extends Component<any, InternalState> {
 
     // return links;
 
-    const {links, all_graphs} =  this.state;
-
+    const {links, all_graphs, graphs} =  this.state;
+    
     all_graphs.map(graph => {
       d3.hierarchy(graph).descendants().forEach(graph => {
         if(graph.children) graph.children.forEach(child => {
-          links.push({
-            target: graph.id,
-            source: child.id
-          })
+            links.push({
+              target: graph.data.id,
+              source: child.data.id
+            })
         })
-
+        graphs.push({
+          id: graph.data.id,
+          denomination: graph.data.denomination,
+          img: graph.data.img,
+          short_libelle_fonction: graph.data.short_libelle_fonction
+        })
       })
     })
     return links;
@@ -528,9 +533,9 @@ class VisualEditor extends Component<any, InternalState> {
   //   });
   // }
 
-  public removeButtonGroup(graph: any) {
-    graph.select("#buttonGroup").remove();
-  }
+  // public removeButtonGroup(graph: any) {
+  //   graph.select("#buttonGroup").remove();
+  // }
 
   public updateSimulation() {
     const { links, graphs } = this.state;

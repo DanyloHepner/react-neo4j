@@ -13,7 +13,7 @@
             "denomination":"H 8 Invest",
             "img":"company.png"
          },
-         "childrens":[
+         "children":[
             {
                "siren":"514119676",
                "dirigeant_id":"924646",
@@ -71,7 +71,7 @@
                   "created_at":"2021-01-18 00:03:38",
                   "updated_at":"2021-01-27 13:28:00"
                },
-               "childrens":[
+               "children":[
                   {
                      "siren":"844840132",
                      "dirigeant_id":"924646",
