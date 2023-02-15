@@ -4,6 +4,7 @@ import React, { Component, SyntheticEvent } from "react";
 
 import { ApiService } from "../services/ApiService";
 import { ColorTheme, sortBy } from "../utils";
+import { ProgramAddress } from '../utils/constants';
 import LinkModal from "./LinkModal";
 import Loading from "./Loading";
 import GraphModal from "./GraphModal";
@@ -30,6 +31,7 @@ interface InternalState {
   links: any[];
   scale: number;
   all_graphs: any[];
+  have2collapse: String[];
 }
 
 class VisualEditor extends Component<any, InternalState> {
@@ -62,7 +64,26 @@ class VisualEditor extends Component<any, InternalState> {
       links: [],
       all_graphs: [],
       scale: 100,
+      have2collapse:[]
     };
+  }
+
+
+  //removes the id if it already exists 
+  //adds a new id into this.state.have2collapse
+  public chkCollapseOrNot(obj:any) {
+    const id: String = obj.id;
+    console.log(id);
+    const {have2collapse} =  this.state;
+    let index:number;
+    if((index = have2collapse.indexOf(id)) > -1) {
+      console.log("will be removed again so that user can see the children nodes of it");
+      have2collapse.splice(index, 1);
+    } else {
+      console.log("will be added to array so that user can't see the children nodes of it");
+      have2collapse.push(id);
+    }
+    return obj;
   }
 
   public async componentDidMount() {
@@ -364,7 +385,15 @@ class VisualEditor extends Component<any, InternalState> {
       );
       console.log(graph);
     graph.append("circle").attr("r", 40).style("fill", (d:any, i:number) => d.color);
-
+    // graph.append('img')
+    //     .attr("src", (d:any) => (ProgramAddress + "assets/" + d.img));
+    graph.append("svg:image")
+        .attr("class", "circle")
+        .attr("xlink:href", (d:any) => (ProgramAddress + "assets/" + d.img))
+        .attr("x", "-8px")
+        .attr('y', '-8px')
+        .attr('width', '40px')
+        .attr('height', '40px');
     graph
       .append("text")
       .attr("dy", "55")
@@ -426,6 +455,9 @@ class VisualEditor extends Component<any, InternalState> {
 
     graph.on("click", (d: any, i: number, n: any[]) => {
       console.log("Clicked");
+      const {have2collapse} = this.state;
+      this.chkCollapseOrNot(d);
+      console.log(have2collapse);
     });
 
     graph.on("contextmenu", (d: any, i: number, n: any[]) => {
