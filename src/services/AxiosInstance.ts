@@ -8,7 +8,7 @@ interface CustomizeConfig extends AxiosRequestConfig {
 
 // axios config options
 const options: CustomizeConfig = {
-  baseURL: "http://localhost:3031",
+  baseURL: "http://localhost:3005",
   timeout: 10000,
   retry: 1,
   retryDelay: 1000,

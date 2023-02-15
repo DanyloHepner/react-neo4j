@@ -3,7 +3,7 @@ import { ButtonProps } from "antd/lib/button";
 import { FormComponentProps } from "antd/lib/form";
 import React, { FC } from "react";
 
-import { Node } from "./types";
+import { Graph } from "./types";
 
 interface Props extends FormComponentProps {
   data?: Node;
@@ -14,7 +14,7 @@ interface Props extends FormComponentProps {
   onCancel: (visible: boolean) => void;
 }
 
-export const NodeModal: FC<Props> = (props) => {
+export const GraphModal: FC<Props> = (props) => {
   const { data, title, visible, loading, onOk, onCancel, form } = props;
   const { getFieldDecorator, validateFields, resetFields } = form;
   const buttonProps: ButtonProps = { shape: "round" };
@@ -47,15 +47,15 @@ export const NodeModal: FC<Props> = (props) => {
       cancelButtonProps={buttonProps}
     >
       <Form onSubmit={handleOk}>
-        <Form.Item label="Node Name">
-          {getFieldDecorator("name", {
-            initialValue: data ? data.name : "",
-            rules: [{ required: true, message: "Please input node name!" }],
-          })(<Input placeholder="Node name" />)}
+        <Form.Item label="Graph denomination">
+          {/* {getFieldDecorator("denomination", {
+            initialValue: data ? data.denomination : "",
+            rules: [{ required: true, message: "Please input node denomination!" }],
+          })(<Input placeholder="Graph denomination" />)} */}
         </Form.Item>
       </Form>
     </Modal>
   );
 };
 
-export default Form.create<Props>()(NodeModal);
+export default Form.create<Props>()(GraphModal);

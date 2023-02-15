@@ -1,4 +1,4 @@
-import { Button, Form, InputNumber, Tooltip } from "antd";
+import { Button, Form, InputNumber, Tooltip, Select } from "antd";
 import React, { FC, useCallback, useEffect, useState } from "react";
 import screenfull from "screenfull";
 
@@ -6,12 +6,12 @@ import SearchBar from "./SearchBar";
 
 interface Props {
   scale: number;
-  showAddNode: () => void;
-  setNodeColor?: (color: string) => void;
+  showAddGraph: () => void;
+  setGraphColor?: (color: string) => void;
 }
 
 const TopTools: FC<Props> = (props) => {
-  const { scale, showAddNode } = props;
+  const { scale, showAddGraph } = props;
   const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
 
   const keyboardPress = useCallback(
@@ -37,9 +37,6 @@ const TopTools: FC<Props> = (props) => {
     }
   };
 
-  // TODO:
-  const showColorPlatte = () => {};
-
   useEffect(() => {
     window.addEventListener("keyup", keyboardPress);
     return window.removeEventListener("keyup", keyboardPress);
@@ -48,13 +45,8 @@ const TopTools: FC<Props> = (props) => {
   return (
     <Form layout="inline" className="visual-editor-tools">
       <Form.Item>
-        <Tooltip title="Add Node" placement="bottom">
-          <Button onClick={showAddNode} shape="circle" icon="plus" type="primary" />
-        </Tooltip>
-      </Form.Item>
-      <Form.Item>
-        <Tooltip title="Set Node Color" placement="bottom">
-          <Button shape="circle" type="primary" icon="instagram" onClick={showColorPlatte} />
+        <Tooltip title="Add Graph" placement="bottom">
+          <Button onClick={showAddGraph} shape="circle" icon="plus" type="primary" />
         </Tooltip>
       </Form.Item>
       <Form.Item>
@@ -68,7 +60,10 @@ const TopTools: FC<Props> = (props) => {
         </Tooltip>
       </Form.Item>
       <Form.Item>
-        <SearchBar />
+        <Tooltip title="Filters data">
+          <Select>
+          </Select>
+        </Tooltip>
       </Form.Item>
       <Form.Item>
         <InputNumber

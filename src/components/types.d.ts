@@ -1,4 +1,4 @@
-export interface Node {
+export interface Graph {
   id?: number | string;
   name: string;
   [key: string]: any;

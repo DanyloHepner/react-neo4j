@@ -6,9 +6,9 @@ import { ApiService } from "../services/ApiService";
 import { ColorTheme, sortBy } from "../utils";
 import LinkModal from "./LinkModal";
 import Loading from "./Loading";
-import NodeModal from "./NodeModal";
+import GraphModal from "./GraphModal";
 import TopTools from "./TopTools";
-import { Link, Node } from "./types";
+import { Link, Graph } from "./types";
 import "./VisualEditor.scss";
 
 const { confirm } = Modal;
@@ -16,17 +16,17 @@ const { Content } = Layout;
 
 interface InternalState {
   loading: boolean;
-  addNodeLoading: boolean;
-  editNodeLoading: boolean;
+  addGraphLoading: boolean;
+  editGraphLoading: boolean;
   showAddLinkModal: boolean;
-  showAddNodeModal: boolean;
-  showNodeModal: boolean;
+  showAddGraphModal: boolean;
+  showGraphModal: boolean;
   showLinkModal: boolean;
-  selectedNode: any;
+  selectedGraph: any;
   selectedLink: any;
-  newNode: Node;
+  newGraph: Graph;
   newLink: Link;
-  nodes: any[];
+  graphs: any[];
   links: any[];
   scale: number;
 }
@@ -39,15 +39,15 @@ class VisualEditor extends Component<any, InternalState> {
 
     this.state = {
       loading: true,
-      selectedNode: null,
+      selectedGraph: null,
       selectedLink: null,
-      addNodeLoading: false,
-      editNodeLoading: false,
+      addGraphLoading: false,
+      editGraphLoading: false,
       showAddLinkModal: false,
-      showAddNodeModal: false,
-      showNodeModal: false,
+      showAddGraphModal: false,
+      showGraphModal: false,
       showLinkModal: false,
-      newNode: {
+      newGraph: {
         id: 0,
         name: "",
       },
@@ -57,32 +57,33 @@ class VisualEditor extends Component<any, InternalState> {
         target: null,
         relative: "LINK_TO",
       },
-      nodes: [],
+      graphs: [],
       links: [],
       scale: 100,
     };
   }
 
   public async componentDidMount() {
-    const { data: nodes } = await ApiService.fetchNodes();
-    const { data: links } = await ApiService.fetchLinks();
+    const { data: graphs } = await ApiService.fetchGraphs();
+    // const { data: links } = await ApiService.fetchLinks();
 
-    this.setState({ loading: false, nodes, links }, () => {
+    this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
-      this.initSimulation(el!, nodes, this.formatLinks(links));
+      this.initSimulation(el!, graphs, this.formatLinks());
     });
   }
 
-  public initSimulation(el: any, nodes: any[], links: any[]) {
+  public initSimulation(el: any, graphs: any[], links: any[]) {
     if (!el) {
       return;
     }
 
     const width = el.clientWidth;
     const height = el.clientHeight;
+    console.log(el.clientHeight, el.clientWidth);
 
     this.simulation = d3
-      .forceSimulation(nodes)
+      .forceSimulation(graphs)
       .force(
         "link",
         d3
@@ -100,9 +101,9 @@ class VisualEditor extends Component<any, InternalState> {
     this.addArrowMarker(svg);
 
     const link = this.initLinks(links, svg);
-    const node = this.initNodes(nodes, svg);
+    const graph = this.initGraphs(graphs, svg);
 
-    this.simulation.on("tick", () => this.handleTick(link, node));
+    this.simulation.on("tick", () => this.handleTick(link, graph));
     this.simulation.alpha(1).restart();
   }
 
@@ -116,14 +117,14 @@ class VisualEditor extends Component<any, InternalState> {
     this.simulation.alpha(1).restart();
   }
 
-  public handleTick(link: any, node: any, img?: any) {
+  public handleTick(link: any, graph: any, img?: any) {
     if (link) {
       link.selectAll(".outline").attr("d", (d: any) => this.linkArc(d));
 
       link.selectAll(".overlay").attr("d", (d: any) => this.linkArc(d));
     }
 
-    node.attr("transform", (d: any) => `translate(${d.x}, ${d.y})`);
+    graph.attr("transform", (d: any) => `translate(${d.x}, ${d.y})`);
   }
 
   //when dragging started
@@ -165,34 +166,37 @@ class VisualEditor extends Component<any, InternalState> {
     svg.on("dblclick.zoom", null); // 静止双击缩放
   }
 
-  public formatLinks(links: any[]) {
-    if (!links || !(links && links.length > 0)) {
-      return [];
-    }
+  public formatLinks() {
+    // if (!links || !(links && links.length > 0)) {
+    //   return [];
+    // }
 
-    links.forEach((link: any) => {
-      const same = links.filter((d) => d.source === link.target && d.target === link.source);
-      const sameSelf = links.filter((d) => d.source === link.source && d.target === link.target);
-      const all = sameSelf.concat(same);
+    // links.forEach((link: any) => {
+    //   const same = links.filter((d) => d.source === link.target && d.target === link.source);
+    //   const sameSelf = links.filter((d) => d.source === link.source && d.target === link.target);
+    //   const all = sameSelf.concat(same);
 
-      all.forEach((item: any, index: number) => {
-        item.sameIndex = index + 1;
-        item.sameTotal = all.length;
-        item.sameTotalHalf = item.sameTotal / 2;
-        item.sameUneven = item.sameTotal % 2 !== 0;
-        item.sameMiddleLink = item.sameUneven === true && Math.ceil(item.sameTotalHalf) === item.sameIndex;
-        item.sameLowerHalf = item.sameIndex <= item.sameTotalHalf;
-        item.sameArcDirection = 1;
-        item.sameIndexCorrected = item.sameLowerHalf ? item.sameIndex : item.sameIndex - Math.ceil(item.sameTotalHalf);
-      });
-    });
+    //   all.forEach((item: any, index: number) => {
+    //     item.sameIndex = index + 1;
+    //     item.sameTotal = all.length;
+    //     item.sameTotalHalf = item.sameTotal / 2;
+    //     item.sameUneven = item.sameTotal % 2 !== 0;
+    //     item.sameMiddleLink = item.sameUneven === true && Math.ceil(item.sameTotalHalf) === item.sameIndex;
+    //     item.sameLowerHalf = item.sameIndex <= item.sameTotalHalf;
+    //     item.sameArcDirection = 1;
+    //     item.sameIndexCorrected = item.sameLowerHalf ? item.sameIndex : item.sameIndex - Math.ceil(item.sameTotalHalf);
+    //   });
+    // });
 
-    const maxSame = links.concat().sort(sortBy("sameTotal")).slice(-1)[0].sameTotal;
+    // const maxSame = links.concat().sort(sortBy("sameTotal")).slice(-1)[0].sameTotal;
 
-    links.forEach((link) => {
-      link.maxSameHalf = Math.round(maxSame / 2);
-    });
+    // links.forEach((link) => {
+    //   link.maxSameHalf = Math.round(maxSame / 2);
+    // });
 
+    // return links;
+
+    const {links} =  this.state;
     return links;
   }
 
@@ -316,33 +320,34 @@ class VisualEditor extends Component<any, InternalState> {
     // console.log('Draw Link');
   }
 
-  public initNodes(nodes: any, svg: any) {
-    const node = svg
+  public initGraphs(graphs: any, svg: any) {
+    const graph = svg
       .append("g")
-      .attr("class", "layer nodes")
-      .selectAll(".node")
-      .data(nodes, (d: any) => d);
-
-    return this.createNode(node);
+      .attr("class", "layer graphs")
+      .selectAll(".graph")
+      .data(graphs, (d: any) => d);
+      console.log(svg);
+      console.log(graph);
+    return this.createGraph(graph);
   }
 
-  public createNode(node: any) {
-    node = node
+  public createGraph(graph: any) {
+    graph = graph
       .enter()
       .append("g")
-      .attr("class", "node")
+      .attr("class", "graph")
       .attr("style", "cursor: pointer")
       .call(
         d3
           .drag()
           .on("start", (d) => this.onDragStarted(d))
-          .on("drag", (d) => this.onDragged(d))
+          .on("drag", (d) => this.onDragged(d))      
           .on("end", (d) => this.onDragEnded(d))
       );
 
-    node.append("circle").attr("r", 30).attr("fill", ColorTheme.Cyan);
+    graph.append("circle").attr("r", 40).attr("fill", ColorTheme.Cyan);
 
-    node
+    graph
       .append("text")
       .attr("dy", "5")
       .attr("fill", "#ffffff")
@@ -350,65 +355,73 @@ class VisualEditor extends Component<any, InternalState> {
       .attr("font-size", "12px")
       .attr("text-anchor", "middle")
       .text((d: any) => {
-        if (d.name && d.name.length > 4) {
-          return d.name.slice(0, 4) + "...";
+        if (d.name && d.name.length > 7) {
+          return d.name.slice(0, 7) + "...";
         }
         return d.name ? d.name : "";
       });
 
-    node.append("title").text((d: any) => d.name);
+    graph.append("title").text((d: any) => d.name);
 
-    // init node event
-    this.initNodeEvent(node);
+    // init graph event
+    this.initGraphEvent(graph);
 
-    return node;
+    return graph;
   }
 
-  public initNodeEvent(node: any) {
-    node.on("mouseenter", (d: any, i: number, n: any[]) => {
-      const node: any = d3.select(n[i]);
+  public initGraphEvent(graph: any) {
+    graph.on("mouseenter", (d: any, i: number, n: any[]) => {
+      const graph: any = d3.select(n[i]);
 
-      if (node._groups[0][0].classList.contains("selected")) {
+      if (graph._groups[0][0].classList.contains("selected")) {
         return;
       }
 
-      node.select("circle").attr("stroke", ColorTheme.Cyan).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
+      graph.select("circle").attr("stroke", ColorTheme.Cyan).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
     });
 
-    node.on("mouseleave", (d: any, i: number, n: any[]) => {
-      const node: any = d3.select(n[i]);
+    // graph.on("mouseleave", (d: any, i: number, n: any[]) => {
+    //   const graph: any = d3.select(n[i]);
 
-      if (node._groups[0][0].classList.contains("selected")) {
-        return;
-      }
+    //   if (graph._groups[0][0].classList.contains("selected")) {
+    //     return;
+    //   }
 
-      node.select("circle").attr("stroke-width", 0);
+    //   graph.select("circle").attr("stroke-width", 0);
+    // });
+
+
+    // graph.on("mouseover", (d: any, i: number, n: any[]) => {
+    //   const graph: any = d3.select(n[i]);
+    //   const circle = graph.select("circle");
+
+    //   const selected = d3.selectAll(".graph.selected");
+
+    //   this.removeButtonGroup(selected);
+    //   if (graph._groups[0][0].classList.contains("selected")) {
+    //     circle.attr("stroke-width", 0);
+    //     graph.attr("class", "graph");
+    //     this.removeButtonGroup(graph);
+    //   } else {
+    //     circle.attr("stroke-width", 12).attr("stroke", ColorTheme.Cyan);
+    //     graph.attr("class", "graph selected");
+    //     this.addButtonGroup(graph);
+    //   }
+
+    //   this.setState({ selectedGraph: d });
+    // });
+
+    graph.on("click", (d: any, i: number, n: any[]) => {
+      console.log("Clicked");
     });
 
-    node.on("click", (d: any, i: number, n: any[]) => {
-      const node: any = d3.select(n[i]);
-      const circle = node.select("circle");
-
-      const selected = d3.selectAll(".node.selected");
-
-      this.removeButtonGroup(selected);
-
-      if (node._groups[0][0].classList.contains("selected")) {
-        circle.attr("stroke-width", 0);
-        node.attr("class", "node");
-        this.removeButtonGroup(node);
-      } else {
-        circle.attr("stroke-width", 12).attr("stroke", ColorTheme.Cyan);
-        node.attr("class", "node selected");
-        this.addButtonGroup(node);
-      }
-
-      this.setState({ selectedNode: d });
+    graph.on("contextmenu", (d: any, i: number, n: any[]) => {
+      d3.event.preventDefault();
+      this.setState({ selectedGraph: d, showGraphModal: true });
     });
 
-    node.on("dblclick", () => {
-      this.setState({ showNodeModal: true });
-    });
+    
+    
   }
 
   public addArrowMarker(svg: any) {
@@ -419,7 +432,7 @@ class VisualEditor extends Component<any, InternalState> {
       .attr("markerWidth", "14")
       .attr("markerHeight", "14")
       .attr("viewBox", "0 -5 10 10")
-      .attr("refX", "30")
+      .attr("refX", "40")
       .attr("refY", "0")
       .attr("orient", "auto");
     const arrowPath = "M0,-4 L10,0 L0,4";
@@ -427,96 +440,102 @@ class VisualEditor extends Component<any, InternalState> {
     arrow.append("path").attr("d", arrowPath).attr("fill", "#A5ABB6");
   }
 
-  public addButtonGroup(node: any) {
-    const data = [1, 1, 1, 1];
-    const buttonGroup = node.append("g").attr("id", "buttonGroup");
+  // public addButtonGroup(graph: any) {
+  //   const data = [1, 1, 1, 1];
+  //   const buttonGroup = graph.append("g").attr("id", "buttonGroup");
 
-    const pieData = d3.pie()(data);
-    const arcButton = d3.arc().innerRadius(32).outerRadius(64);
-    const arcText = d3.arc().innerRadius(32).outerRadius(60);
+  //   const pieData = d3.pie()(data);
+  //   const arcButton = d3.arc().innerRadius(32).outerRadius(64);
+  //   const arcText = d3.arc().innerRadius(32).outerRadius(60);
 
-    buttonGroup
-      .selectAll(".button")
-      .data(pieData)
-      .enter()
-      .append("path")
-      .attr("class", (d: any, i: number) => `button action-${i}`)
-      .attr("d", (d: any) => arcButton(d))
-      .attr("fill", "#c7c5ba")
-      .style("cursor", "pointer")
-      .attr("stroke", "#f1f4f9")
-      .attr("stroke-width", 2)
-      .attr("stroke-opacity", 0.7);
+  //   buttonGroup.on("mouseover", () => {
+      
+  //   })
 
-    buttonGroup
-      .selectAll(".text")
-      .data(pieData)
-      .enter()
-      .append("text")
-      .attr("class", "text")
-      .attr("transform", (d: any) => `translate(${arcText.centroid(d)})`)
-      .attr("text-anchor", "middle")
-      .attr("fill", "#fff")
-      .attr("pointer-events", "none")
-      .attr("font-size", 11)
-      .text((d: any, i: number) => {
-        const actions = ["Edit", "Add", "Link", "Delete"];
-        return actions[i];
-      });
+  //   buttonGroup
+  //     .selectAll(".button")
+  //     .data(pieData)
+  //     .enter()
+  //     .append("path")
+  //     .attr("class", (d: any, i: number) => `button action-${i}`)
+  //     .attr("d", (d: any) => arcButton(d))
+  //     .attr("fill", "#c7c5ba")
+  //     .style("cursor", "pointer")
+  //     .attr("stroke", "#f1f4f9")
+  //     .attr("stroke-width", 2)
+  //     .attr("stroke-opacity", 0.7);
 
-    this.initButtonActions();
+  //   buttonGroup
+  //     .selectAll(".text")
+  //     .data(pieData)
+  //     .enter()
+  //     .append("text")
+  //     .attr("class", "text")
+  //     .attr("transform", (d: any) => `translate(${arcText.centroid(d)})`)
+  //     .attr("text-anchor", "middle")
+  //     .attr("fill", "#fff")
+  //     .attr("pointer-events", "none")
+  //     .attr("font-size", 11)
+  //     .text((d: any, i: number) => {
+  //       const actions = ["Edit", "Add", "Link", "Delete"];
+  //       return actions[i];
+  //     });
 
-    return buttonGroup;
-  }
+  //   this.initButtonActions();
 
-  public initButtonActions() {
-    const buttonGroup = d3.select("#buttonGroup");
+  //   return buttonGroup;
+  // }
 
-    buttonGroup
-      .selectAll(".button")
-      .on("mouseenter", function () {
-        const button: any = d3.select(this);
-        button.attr("fill", "#CACACA");
-      })
-      .on("mouseleave", function () {
-        const button: any = d3.select(this);
-        button.attr("fill", "#c7c5ba");
-      });
+  // public initButtonActions() {
+  //   const buttonGroup = d3.select("#buttonGroup");
 
-    buttonGroup.select(".button.action-0").on("click", (d) => {
-      this.setState({
-        selectedNode: d,
-        showNodeModal: true,
-      });
-    });
+  //   buttonGroup
+  //     .selectAll(".button")
+  //     .on("mouseenter", function () {
+  //       const button: any = d3.select(this);
+  //       button.attr("fill", "#CACACA");
+  //       // button.attr('fill', 'red');
+  //     })
+  //     .on("mouseleave", function () {
+  //       const button: any = d3.select(this);
+  //       button.attr("fill", "#c7c5ba");
+  //       // button.attr('fill', 'yellow');
+  //     });
 
-    buttonGroup.select(".button.action-1").on("click", (d) => this.showAddNode());
+  //   buttonGroup.select(".button.action-0").on("click", (d) => {
+  //     this.setState({
+  //       selectedGraph: d,
+  //       showGraphModal: true,
+  //     });
+  //   });
 
-    buttonGroup.select(".button.action-2").on("click", (d) => this.showAddLink());
+  //   buttonGroup.select(".button.action-1").on("click", (d) => this.showAddGraph());
 
-    buttonGroup.select(".button.action-3").on("click", (d: any) => {
-      confirm({
-        centered: true,
-        title: `Do you want to delete ${d.name}?`,
-        onOk: async () => await this.removeNode(d),
-      });
-    });
-  }
+  //   buttonGroup.select(".button.action-2").on("click", (d) => this.showAddLink());
 
-  public removeButtonGroup(node: any) {
-    node.select("#buttonGroup").remove();
+  //   buttonGroup.select(".button.action-3").on("click", (d: any) => {
+  //     confirm({
+  //       centered: true,
+  //       title: `Do you want to delete ${d.name}?`,
+  //       onOk: async () => await this.removeGraph(d),
+  //     });
+  //   });
+  // }
+
+  public removeButtonGroup(graph: any) {
+    graph.select("#buttonGroup").remove();
   }
 
   public updateSimulation() {
-    const { links, nodes } = this.state;
-    const nodesEl = d3.select(".nodes");
+    const { links, graphs } = this.state;
+    const graphsEl = d3.select(".graphs");
     const linksEl = d3.select(".links");
 
-    // Update node
-    let node = nodesEl.selectAll(".node").data(nodes, (d: any) => d);
-    node.exit().remove();
-    const nodeEnter = this.createNode(node);
-    node = nodeEnter.merge(node);
+    // Update graph
+    let graph = graphsEl.selectAll(".graph").data(graphs, (d: any) => d);
+    graph.exit().remove();
+    const graphEnter = this.createGraph(graph);
+    graph = graphEnter.merge(graph);
 
     // Update link
     let link = linksEl.selectAll(".link").data(links, (d: any) => d);
@@ -524,7 +543,7 @@ class VisualEditor extends Component<any, InternalState> {
     const linkEnter = this.createLink(link);
     link = linkEnter.merge(link);
 
-    this.simulation.nodes(nodes).on("tick", () => this.handleTick(link, node));
+    this.simulation.graphs(graphs).on("tick", () => this.handleTick(link, graph));
     this.simulation.force("link").links(links);
     this.simulation.alpha(1).restart();
   }
@@ -534,96 +553,96 @@ class VisualEditor extends Component<any, InternalState> {
     this.setState({ showAddLinkModal: true });
   }
 
-  // TODO: need to do
-  public handleAddLinkOk() {
-    // const { newLink } = this.state;
-    // console.log(newLink);
+  // // TODO: need to do
+  // public handleAddLinkOk() {
+  //   // const { newLink } = this.state;
+  //   // console.log(newLink);
+  // }
+
+  // // Add link
+  // public async addLink(source: number | string, target: number | string, relative: string) {
+  //   try {
+  //     const link = {
+  //       source,
+  //       target,
+  //       relative,
+  //     };
+  //     const { data } = await ApiService.postLink(link);
+  //     const links = this.state.links.concat([data]);
+
+  //     this.setState({ links: this.formatLinks(links) }, () => this.updateSimulation());
+  //     this.handleAddLinkCancel(false);
+  //     message.success("Add Link Success");
+  //   } catch (err) {
+  //     //message.error(err.message);
+  //   }
+  // }
+
+  // public handleAddLinkChange(value: any) {
+  //   this.setState({
+  //     newLink: {
+  //       ...this.state.newLink,
+  //       relative: value,
+  //     },
+  //   });
+  // }
+
+  // public handleAddLinkCancel(visible: boolean) {
+  //   this.setState({
+  //     showAddLinkModal: visible,
+  //     newLink: {
+  //       id: 0,
+  //       source: null,
+  //       target: null,
+  //       relative: "",
+  //     },
+  //   });
+  // }
+
+  public showAddGraph() {
+    this.setState({ showAddGraphModal: true });
   }
 
-  // Add link
-  public async addLink(source: number | string, target: number | string, relative: string) {
+  // Add graph
+  public async handleAddGraphOk(graph: Graph) {
+    const { graphs } = this.state;
+
     try {
-      const link = {
-        source,
-        target,
-        relative,
-      };
-      const { data } = await ApiService.postLink(link);
-      const links = this.state.links.concat([data]);
-
-      this.setState({ links: this.formatLinks(links) }, () => this.updateSimulation());
-      this.handleAddLinkCancel(false);
-      message.success("Add Link Success");
-    } catch (err) {
-      //message.error(err.message);
-    }
-  }
-
-  public handleAddLinkChange(value: any) {
-    this.setState({
-      newLink: {
-        ...this.state.newLink,
-        relative: value,
-      },
-    });
-  }
-
-  public handleAddLinkCancel(visible: boolean) {
-    this.setState({
-      showAddLinkModal: visible,
-      newLink: {
-        id: 0,
-        source: null,
-        target: null,
-        relative: "",
-      },
-    });
-  }
-
-  public showAddNode() {
-    this.setState({ showAddNodeModal: true });
-  }
-
-  // Add node
-  public async handleAddNodeOk(node: Node) {
-    const { nodes } = this.state;
-
-    try {
-      this.setState({ addNodeLoading: true });
-      const { data } = await ApiService.postNode(node);
+      this.setState({ addGraphLoading: true });
+      const { data } = await ApiService.postGraph(graph);
 
       this.setState(
         {
-          nodes: nodes.concat([data]),
-          addNodeLoading: false,
+          graphs: graphs.concat([data]),
+          addGraphLoading: false,
         },
         () => this.updateSimulation()
       );
-      this.handleAddNodeCancel(false);
-      message.success("Add Node Success");
+      this.handleAddGraphCancel(false);
+      message.success("Add Graph Success");
     } catch (err) {
-      this.setState({ addNodeLoading: false });
+      this.setState({ addGraphLoading: false });
       // message.error(err.message);
     }
   }
 
-  public handleAddNodeCancel(visible: boolean) {
-    this.setState({ showAddNodeModal: visible });
+  public handleAddGraphCancel(visible: boolean) {
+    this.setState({ showAddGraphModal: visible });
   }
 
-  // Update nodes list
-  public async handleNodeOk(node: Node) {
-    const { selectedNode } = this.state;
+  // Update graphs list
+  public async handleGraphOk(graph: Graph) {
+    const { selectedGraph } = this.state;
 
     try {
-      this.setState({ editNodeLoading: true });
-      await ApiService.patchNode(selectedNode.id, node);
+      this.setState({ editGraphLoading: true });
+      await ApiService.patchGraph(selectedGraph.id, graph);
 
-      const nodes = this.state.nodes.map((item) => {
-        if (item.id === selectedNode.id) {
+      const graphs = this.state.graphs.map((item) => {
+        if (item.id === selectedGraph.id) {
           return {
-            ...selectedNode,
-            ...node,
+            ...selectedGraph,
+            ...graph,
           };
         }
         return item;
@@ -631,91 +650,91 @@ class VisualEditor extends Component<any, InternalState> {
 
       this.setState(
         {
-          nodes,
-          selectedNode: {
-            ...selectedNode,
-            ...node,
+          graphs,
+          selectedGraph: {
+            ...selectedGraph,
+            ...graph,
           },
-          editNodeLoading: false,
+          editGraphLoading: false,
         },
         () => this.updateSimulation()
       );
-      this.handleNodeCancel(false);
+      this.handleGraphCancel(false);
 
-      message.success("Update Node Success");
+      message.success("Update Graph Success");
     } catch (err) {
-      this.setState({ editNodeLoading: false });
+      this.setState({ editGraphLoading: false });
       // message.error(err.message);
     }
   }
 
-  public handleNodeCancel(visible: boolean) {
-    this.setState({ showNodeModal: visible });
+  public handleGraphCancel(visible: boolean) {
+    this.setState({ showGraphModal: visible });
   }
 
-  // Update links list
-  public async handleLinkOk() {
-    const { selectedLink } = this.state;
+  // // Update links list
+  // public async handleLinkOk() {
+  //   const { selectedLink } = this.state;
+
+  //   try {
+  //     const { id, value, source, target, relative } = selectedLink;
+  //     const params = {
+  //       id,
+  //       value,
+  //       source: source.id,
+  //       target: target.id,
+  //       relative,
+  //     };
+
+  //     await ApiService.patchLink(id, params);
+
+  //     const links = this.state.links.map((item) => {
+  //       if (item.id === selectedLink.id) {
+  //         return selectedLink;
+  //       }
+  //       return item;
+  //     });
+
+  //     this.setState({ links }, () => this.updateSimulation());
+  //     this.handleLinkCancel(false);
+  //     message.success("Update Link Success");
+  //   } catch (err) {
+  //     // message.error(err.message);
+  //   }
+  // }
+
+  // public handleLinkChange(value: any) {
+  //   const { selectedLink } = this.state;
+  //   this.setState({
+  //     selectedLink: {
+  //       ...selectedLink,
+  //       relative: value,
+  //     },
+  //   });
+  // }
+
+  // public handleLinkCancel(visible: boolean) {
+  //   this.setState({ showLinkModal: visible });
+  // }
+
+  public async removeGraph(graph: any) {
+    const { graphs, links } = this.state;
 
     try {
-      const { id, value, source, target, relative } = selectedLink;
-      const params = {
-        id,
-        value,
-        source: source.id,
-        target: target.id,
-        relative,
-      };
+      const removedGraphs = graphs.filter((d) => d.id === graph.id);
+      const removedLinks = links.filter((d) => d.source.id === graph.id || d.target.id === graph.id);
 
-      await ApiService.patchLink(id, params);
-
-      const links = this.state.links.map((item) => {
-        if (item.id === selectedLink.id) {
-          return selectedLink;
-        }
-        return item;
-      });
-
-      this.setState({ links }, () => this.updateSimulation());
-      this.handleLinkCancel(false);
-      message.success("Update Link Success");
-    } catch (err) {
-      // message.error(err.message);
-    }
-  }
-
-  public handleLinkChange(value: any) {
-    const { selectedLink } = this.state;
-    this.setState({
-      selectedLink: {
-        ...selectedLink,
-        relative: value,
-      },
-    });
-  }
-
-  public handleLinkCancel(visible: boolean) {
-    this.setState({ showLinkModal: visible });
-  }
-
-  public async removeNode(node: any) {
-    const { nodes, links } = this.state;
-
-    try {
-      const removedNodes = nodes.filter((d) => d.id === node.id);
-      const removedLinks = links.filter((d) => d.source.id === node.id || d.target.id === node.id);
-
-      await Promise.all(removedNodes.map(async (d: any) => await ApiService.deleteNode(d.id)));
-      await Promise.all(removedLinks.map(async (d: any) => await ApiService.deleteLink(d.id)));
+      await Promise.all(removedGraphs.map(async (d: any) => await ApiService.deleteGraph(d.id)));
+      // await Promise.all(removedLinks.map(async (d: any) => await ApiService.deleteLink(d.id)));
 
       this.setState(
         {
-          nodes: nodes.filter((d) => d.id !== node.id),
-          links: links.filter((d) => d.source.id !== node.id && d.target.id !== node.id),
+          graphs: graphs.filter((d) => d.id !== graph.id),
+          links: links.filter((d) => d.source.id !== graph.id && d.target.id !== graph.id),
         },
         () => this.updateSimulation()
       );
-      message.success("Remove Node Success");
+      message.success("Remove Graph Success");
     } catch (err) {
       //message.error(err.message);
     }
@@ -724,14 +743,14 @@ class VisualEditor extends Component<any, InternalState> {
   public render() {
     const {
       scale,
-      selectedNode,
+      selectedGraph,
       selectedLink,
-      showAddNodeModal,
-      showNodeModal,
+      showAddGraphModal,
+      showGraphModal,
       showLinkModal,
       showAddLinkModal,
-      addNodeLoading,
-      editNodeLoading,
+      addGraphLoading,
+      editGraphLoading,
     } = this.state;
 
     if (this.state.loading) {
@@ -740,28 +759,29 @@ class VisualEditor extends Component<any, InternalState> {
 
     return (
       <Content className="visual-editor">
-        <TopTools scale={scale} showAddNode={() => this.showAddNode()} />
+        <TopTools scale={scale} showAddGraph={() => this.showAddGraph()} />
         <div
           id="Neo4jContainer"
           className="visual-editor-container"
           onClick={(e: SyntheticEvent) => this.restartSimulation(e)}
         />
-        <NodeModal
-          title="Add Node"
-          loading={addNodeLoading}
-          visible={showAddNodeModal}
-          onOk={(node: Node) => this.handleAddNodeOk(node)}
-          onCancel={(visible: boolean) => this.handleAddNodeCancel(visible)}
+        {/*Will use these*/}
+        {/* <GraphModal
+          title="Add Graph"
+          loading={addGraphLoading}
+          visible={showAddGraphModal}
+          onOk={(graph: Graph) => this.handleAddGraphOk(graph)}
+          onCancel={(visible: boolean) => this.handleAddGraphCancel(visible)}
         />
-        <NodeModal
-          title="Edit Node"
-          visible={showNodeModal}
-          data={selectedNode}
-          loading={editNodeLoading}
-          onOk={(node: Node) => this.handleNodeOk(node)}
-          onCancel={(visible: boolean) => this.handleNodeCancel(visible)}
-        />
-        <LinkModal
+        <GraphModal
+          title="Edit Graph"
+          visible={showGraphModal}
+          data={selectedGraph}
+          loading={editGraphLoading}
+          onOk={(graph: Graph) => this.handleGraphOk(graph)}
+          onCancel={(visible: boolean) => this.handleGraphCancel(visible)}
+        /> */}
+        {/* <LinkModal
           title="Add Link"
           visible={showAddLinkModal}
           onOk={() => this.handleAddLinkOk()}
@@ -773,7 +793,7 @@ class VisualEditor extends Component<any, InternalState> {
           data={selectedLink}
           onOk={() => this.handleLinkOk()}
           onCancel={(visible: boolean) => this.handleLinkCancel(visible)}
-        />
+        /> */}
       </Content>
     );
   }
