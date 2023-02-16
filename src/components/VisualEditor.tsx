@@ -86,13 +86,6 @@ class VisualEditor extends Component<any, InternalState> {
     return obj;
   }
 
-  //collapses the children of clicked node
-  collapseChildrenOf(id: String) {
-    let {links} = this.state;
-    links = links.filter((link) => link.target !== id);
-    return 1;
-  }
-
   public async componentDidMount() {
     const { data: graphs } = await ApiService.fetchGraphs();
     // const { data: links } = await ApiService.fetchLinks();
@@ -407,7 +400,7 @@ class VisualEditor extends Component<any, InternalState> {
       .attr("pointer-events", "none")
       .attr("font-size", "12px")
       .attr("text-anchor", "middle")
-      .text((d: any) => d.denomination);
+      .text((d: any) => d.denomination)
 
     // graph.append("title").text((d: any) => d.denomination);
 
