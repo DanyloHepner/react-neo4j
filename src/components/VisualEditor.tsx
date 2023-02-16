@@ -141,7 +141,6 @@ class VisualEditor extends Component<any, InternalState> {
   public handleTick(link: any, graph: any, img?: any) {
     if (link) {
       link.selectAll(".outline").attr("d", (d: any) => this.linkArc(d));
-
       link.selectAll(".overlay").attr("d", (d: any) => this.linkArc(d));
     }
 
@@ -192,6 +191,7 @@ class VisualEditor extends Component<any, InternalState> {
     const { links, all_graphs, graphs } = this.state;
     all_graphs.map(graph => {
       d3.hierarchy(graph).descendants().forEach(graph => {
+
         if (graph.children) graph.children.forEach(child => {
           links.push({
             target: graph.data.id,
@@ -202,16 +202,14 @@ class VisualEditor extends Component<any, InternalState> {
         graphs.push({
           id: graph.data.id,
           denomination: graph.data.Nodedata.denomination,
-          img: graph.data.img,
+          img: graph.data.Nodedata.img,
           short_libelle_fonction: graph.data.short_libelle_fonction,
           color: graph.data.Nodedata.color
         })
       })
     })
 
-    console.log(graphs);
     graphs.splice(0, 1);
-    console.log(graphs);
 
     if (!links || !(links && links.length > 0)) {
       return [];
