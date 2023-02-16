@@ -64,19 +64,19 @@ class VisualEditor extends Component<any, InternalState> {
       links: [],
       all_graphs: [],
       scale: 100,
-      have2collapse:[]
+      have2collapse: []
     };
   }
 
 
   //removes the id if it already exists 
   //adds a new id into this.state.have2collapse
-  public chkCollapseOrNot(obj:any) {
+  public chkCollapseOrNot(obj: any) {
     const id: String = obj.id;
     console.log(id);
-    const {have2collapse} =  this.state;
-    let index:number;
-    if((index = have2collapse.indexOf(id)) > -1) {
+    const { have2collapse } = this.state;
+    let index: number;
+    if ((index = have2collapse.indexOf(id)) > -1) {
       console.log("will be removed again so that user can see the children nodes of it");
       have2collapse.splice(index, 1);
     } else {
@@ -86,10 +86,17 @@ class VisualEditor extends Component<any, InternalState> {
     return obj;
   }
 
+  //collapses the children of clicked node
+  collapseChildrenOf(id: String) {
+    let {links} = this.state;
+    links = links.filter((link) => link.target !== id);
+    return 1;
+  }
+
   public async componentDidMount() {
     const { data: graphs } = await ApiService.fetchGraphs();
     // const { data: links } = await ApiService.fetchLinks();
-    this.setState({all_graphs: graphs});
+    this.setState({ all_graphs: graphs });
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
       this.initSimulation(el!, graphs, this.formatLinks());
@@ -189,15 +196,15 @@ class VisualEditor extends Component<any, InternalState> {
 
   public formatLinks() {
 
-    const {links, all_graphs, graphs} =  this.state;
-    
+    const { links, all_graphs, graphs } = this.state;
     all_graphs.map(graph => {
       d3.hierarchy(graph).descendants().forEach(graph => {
-        if(graph.children) graph.children.forEach(child => {
-            links.push({
-              target: graph.data.id,
-              source: child.data.id
-            })
+        if (graph.children) graph.children.forEach(child => {
+          links.push({
+            target: graph.data.id,
+            source: child.data.id,
+            short_libelle_fonction: child.data.short_libelle_fonction
+          })
         })
         graphs.push({
           id: graph.data.id,
@@ -208,6 +215,10 @@ class VisualEditor extends Component<any, InternalState> {
         })
       })
     })
+
+    console.log(graphs);
+    graphs.splice(0, 1);
+    console.log(graphs);
 
     if (!links || !(links && links.length > 0)) {
       return [];
@@ -235,16 +246,12 @@ class VisualEditor extends Component<any, InternalState> {
     links.forEach((link) => {
       link.maxSameHalf = Math.round(maxSame / 2);
     });
-
-
     return links;
   }
 
   public initImage(img: string, svg: any) {
     const el = svg.selectAll("image").data([0]);
-
     el.enter().append("svg:image").attr("xlink:href", img).attr("height", "100%").attr("x", 0).attr("y", 0);
-
     return el;
   }
 
@@ -286,8 +293,8 @@ class VisualEditor extends Component<any, InternalState> {
       .attr("font-size", 12)
       .attr("text-anchor", "middle")
       .text((d: any) => {
-        if (d.relative !== "") {
-          return d.relative;
+        if (d.short_libelle_fonction !== "") {
+          return d.short_libelle_fonction;
         }
       });
 
@@ -380,20 +387,19 @@ class VisualEditor extends Component<any, InternalState> {
         d3
           .drag()
           .on("start", (d) => this.onDragStarted(d))
-          .on("drag", (d) => this.onDragged(d))      
+          .on("drag", (d) => this.onDragged(d))
           .on("end", (d) => this.onDragEnded(d))
       );
-      console.log(graph);
-    graph.append("circle").attr("r", 40).style("fill", (d:any, i:number) => d.color);
+    graph.append("circle").attr("r", 40).style("fill", (d: any, i: number) => d.color);
     // graph.append('img')
     //     .attr("src", (d:any) => (ProgramAddress + "assets/" + d.img));
     graph.append("svg:image")
-        .attr("class", "circle")
-        .attr("xlink:href", (d:any) => (ProgramAddress + "assets/" + d.img))
-        .attr("x", "-8px")
-        .attr('y', '-8px')
-        .attr('width', '40px')
-        .attr('height', '40px');
+      .attr("class", "circle")
+      .attr("xlink:href", (d: any) => (ProgramAddress + "assets/" + (d.img ? d.img : "no_image.png")))
+      .attr("x", "-30px")
+      .attr('y', '-30px')
+      .attr('width', '60px')
+      .attr('height', '60px');
     graph
       .append("text")
       .attr("dy", "55")
@@ -419,7 +425,7 @@ class VisualEditor extends Component<any, InternalState> {
         return;
       }
 
-      graph.select("circle").attr("stroke", (d:any, i:number) => d.color).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
+      graph.select("circle").attr("stroke", (d: any, i: number) => d.color).attr("stroke-width", "12").attr("stroke-opacity", "0.5");
     });
 
     graph.on("mouseleave", (d: any, i: number, n: any[]) => {
@@ -455,9 +461,20 @@ class VisualEditor extends Component<any, InternalState> {
 
     graph.on("click", (d: any, i: number, n: any[]) => {
       console.log("Clicked");
-      const {have2collapse} = this.state;
+      const { have2collapse } = this.state;
       this.chkCollapseOrNot(d);
       console.log(have2collapse);
+
+      if (!d3.event.defaultPrevented) {
+        if (d.children) {
+          d._children = d.children;
+          d.children = null;
+        } else {
+          d.children = d._children;
+          d._children = null;
+        }
+      }
+      console.log(d);
     });
 
     graph.on("contextmenu", (d: any, i: number, n: any[]) => {
@@ -465,8 +482,8 @@ class VisualEditor extends Component<any, InternalState> {
       this.setState({ selectedGraph: d, showGraphModal: true });
     });
 
-    
-    
+
+
   }
 
   public addArrowMarker(svg: any) {
@@ -494,7 +511,7 @@ class VisualEditor extends Component<any, InternalState> {
   //   const arcText = d3.arc().innerRadius(32).outerRadius(60);
 
   //   buttonGroup.on("mouseover", () => {
-      
+
   //   })
 
   //   buttonGroup
