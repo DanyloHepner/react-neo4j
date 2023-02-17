@@ -1,18 +1,14 @@
 import { Layout, message, Modal } from "antd";
 import * as d3 from "d3";
-import React, { Component, SyntheticEvent } from "react";
+import { Component, SyntheticEvent } from "react";
 
 import { ApiService } from "../services/ApiService";
-import { ColorTheme, sortBy } from "../utils";
+import { sortBy } from "../utils";
 import { ProgramAddress } from '../utils/constants';
-import LinkModal from "./LinkModal";
 import Loading from "./Loading";
-import GraphModal from "./GraphModal";
-import TopTools from "./TopTools";
-import { Link, Graph } from "./types";
+import { Graph } from "./types";
 import "./VisualEditor.scss";
 
-const { confirm } = Modal;
 const { Content } = Layout;
 
 interface InternalState {
@@ -25,13 +21,14 @@ interface InternalState {
   showLinkModal: boolean;
   selectedGraph: any;
   selectedLink: any;
-  newGraph: Graph;
-  newLink: Link;
   graphs: any[];
   links: any[];
   scale: number;
   all_graphs: any[];
-  have2collapse: String[];
+  copy_all_graphs: any[];
+  last_click_id: String;
+  collapsedArray: String[];
+  collapsedArray_changed: number;
 }
 
 class VisualEditor extends Component<any, InternalState> {
@@ -42,29 +39,22 @@ class VisualEditor extends Component<any, InternalState> {
 
     this.state = {
       loading: true,
-      selectedGraph: null,
-      selectedLink: null,
       addGraphLoading: false,
       editGraphLoading: false,
       showAddLinkModal: false,
       showAddGraphModal: false,
       showGraphModal: false,
       showLinkModal: false,
-      newGraph: {
-        id: 0,
-        name: "",
-      },
-      newLink: {
-        id: 0,
-        source: null,
-        target: null,
-        relative: "LINK_TO",
-      },
+      selectedGraph: null,
+      selectedLink: null,
       graphs: [],
       links: [],
       all_graphs: [],
+      copy_all_graphs: [],
       scale: 100,
-      have2collapse: []
+      last_click_id: "",
+      collapsedArray: [],
+      collapsedArray_changed: 0
     };
   }
 
@@ -74,15 +64,31 @@ class VisualEditor extends Component<any, InternalState> {
     const { data: graphs } = await ApiService.fetchGraphs();
     // const { data: links } = await ApiService.fetchLinks();
     this.setState({ all_graphs: graphs });
+    this.setState({ copy_all_graphs: [...this.state.all_graphs] });
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
       this.defineGraphsAndLinks();
+      console.log(graphs);
       this.initSimulation(el!, graphs, this.formatLinks());
     });
   }
 
   public componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<InternalState>, snapshot?: any): void {
-    console.log("componentDidUpdate gets invoked");
+    if (prevState.collapsedArray_changed !== this.state.collapsedArray_changed) {
+      this.setState((state) => {
+        return {all_graphs: [...state.copy_all_graphs]};
+      });
+      this.state.all_graphs[0].children = null;
+      // this.traverseGraph(this.state.all_graphs[0]);
+      const graphs = d3.hierarchy(this.state.all_graphs[0]).descendants();
+      const el = document.getElementById("Neo4jContainer");
+      this.defineGraphsAndLinks();
+      this.initSimulation(el!, graphs, this.formatLinks());
+    }
+  }
+
+  public traverseGraph(d: any) {
+    
   }
 
   public initSimulation(el: any, graphs: any[], links: any[]) {
@@ -176,14 +182,13 @@ class VisualEditor extends Component<any, InternalState> {
   }
 
   public defineGraphsAndLinks() {
-    console.log(this.state.have2collapse);
-    const { links, all_graphs, graphs } = this.state;
-    //temporary code for checking if it works although remove the children nodes of whole graph
-
+    let { links, all_graphs, graphs, copy_all_graphs } = this.state;
+    // links = [];
+    // graphs = [];
+    copy_all_graphs = [...all_graphs];
     all_graphs.map(graph => {
-      console.log(d3.hierarchy(graph))
-      d3.hierarchy(graph).descendants().forEach(graph => {
-        
+      d3.hierarchy(graph).descendants().map(graph => {
+
         if (graph.children) graph.children.forEach(child => {
           links.push({
             target: graph.data.id,
@@ -201,12 +206,14 @@ class VisualEditor extends Component<any, InternalState> {
       })
     })
 
-    if(graphs[0].date_immatriculation)
+    if (graphs[0].date_immatriculation)
       graphs.splice(0, 1);
+
+    all_graphs = [...copy_all_graphs];
   }
 
   public formatLinks() {
-    const {links} = this.state;
+    const { links } = this.state;
     if (!links || !(links && links.length > 0)) {
       return [];
     }
@@ -351,7 +358,6 @@ class VisualEditor extends Component<any, InternalState> {
   }
 
   public drawLink() {
-    // console.log('Draw Link');
   }
 
   public initGraphs(graphs: any, svg: any) {
@@ -378,8 +384,6 @@ class VisualEditor extends Component<any, InternalState> {
           .on("end", (d) => this.onDragEnded(d))
       );
     graph.append("circle").attr("r", 40).style("fill", (d: any, i: number) => d.color);
-    // graph.append('img')
-    //     .attr("src", (d:any) => (ProgramAddress + "assets/" + d.img));
     graph.append("svg:image")
       .attr("class", "circle")
       .attr("xlink:href", (d: any) => (ProgramAddress + "assets/" + (d.img ? d.img : "no_image.png")))
@@ -395,8 +399,6 @@ class VisualEditor extends Component<any, InternalState> {
       .attr("font-size", "12px")
       .attr("text-anchor", "middle")
       .text((d: any) => d.denomination)
-
-    // graph.append("title").text((d: any) => d.denomination);
 
     // init graph event
     this.initGraphEvent(graph);
@@ -426,49 +428,17 @@ class VisualEditor extends Component<any, InternalState> {
     });
 
 
-    // graph.on("mouseover", (d: any, i: number, n: any[]) => {
-    //   const graph: any = d3.select(n[i]);
-    //   const circle = graph.select("circle");
-
-    //   const selected = d3.selectAll(".graph.selected");
-
-    //   this.removeButtonGroup(selected);
-    //   if (graph._groups[0][0].classList.contains("selected")) {
-    //     circle.attr("stroke-width", 0);
-    //     graph.attr("class", "graph");
-    //     this.removeButtonGroup(graph);
-    //   } else {
-    //     circle.attr("stroke-width", 12).attr("stroke", ColorTheme.Cyan);
-    //     graph.attr("class", "graph selected");
-    //     this.addButtonGroup(graph);
-    //   }
-
-    //   this.setState({ selectedGraph: d });
-    // });
-
     graph.on("click", (d: any, i: number, n: any[]) => {
-
-      const id: String = d.id;
-      const { have2collapse, graphs } = this.state;
-      let index: number;
-      if ((index = have2collapse.indexOf(id)) > -1) {
-        console.log("will be removed again so that user can see the children nodes of it");
-        have2collapse.splice(index, 1);
+      const { collapsedArray } = this.state;
+      let index;
+      if ((index = collapsedArray.indexOf(d.id)) > -1) {
+        collapsedArray.splice(index, 1);
       } else {
-        console.log("will be added to array so that user can't see the children nodes of it");
-        have2collapse.push(id);
+        collapsedArray.push(d.id);
       }
-      console.log(have2collapse);
-      this.forceUpdate();
-      // if (!d3.event.defaultPrevented) {
-      //   if (d.children) {
-      //     d._children = d.children;
-      //     d.children = null;
-      //   } else {
-      //     d.children = d._children;
-      //     d._children = null;
-      //   }
-      // }
+      this.setState((state) => {
+        return {collapsedArray_changed: state.collapsedArray_changed + 1}
+      });
     });
 
     graph.on("contextmenu", (d: any, i: number, n: any[]) => {
@@ -496,95 +466,10 @@ class VisualEditor extends Component<any, InternalState> {
     arrow.append("path").attr("d", arrowPath).attr("fill", "#A5ABB6");
   }
 
-  // public addButtonGroup(graph: any) {
-  //   const data = [1, 1, 1, 1];
-  //   const buttonGroup = graph.append("g").attr("id", "buttonGroup");
-
-  //   const pieData = d3.pie()(data);
-  //   const arcButton = d3.arc().innerRadius(32).outerRadius(64);
-  //   const arcText = d3.arc().innerRadius(32).outerRadius(60);
-
-  //   buttonGroup.on("mouseover", () => {
-
-  //   })
-
-  //   buttonGroup
-  //     .selectAll(".button")
-  //     .data(pieData)
-  //     .enter()
-  //     .append("path")
-  //     .attr("class", (d: any, i: number) => `button action-${i}`)
-  //     .attr("d", (d: any) => arcButton(d))
-  //     .attr("fill", "#c7c5ba")
-  //     .style("cursor", "pointer")
-  //     .attr("stroke", "#f1f4f9")
-  //     .attr("stroke-width", 2)
-  //     .attr("stroke-opacity", 0.7);
-
-  //   buttonGroup
-  //     .selectAll(".text")
-  //     .data(pieData)
-  //     .enter()
-  //     .append("text")
-  //     .attr("class", "text")
-  //     .attr("transform", (d: any) => `translate(${arcText.centroid(d)})`)
-  //     .attr("text-anchor", "middle")
-  //     .attr("fill", "#fff")
-  //     .attr("pointer-events", "none")
-  //     .attr("font-size", 11)
-  //     .text((d: any, i: number) => {
-  //       const actions = ["Edit", "Add", "Link", "Delete"];
-  //       return actions[i];
-  //     });
-
-  //   this.initButtonActions();
-
-  //   return buttonGroup;
-  // }
-
-  // public initButtonActions() {
-  //   const buttonGroup = d3.select("#buttonGroup");
-
-  //   buttonGroup
-  //     .selectAll(".button")
-  //     .on("mouseenter", function () {
-  //       const button: any = d3.select(this);
-  //       button.attr("fill", "#CACACA");
-  //       // button.attr('fill', 'red');
-  //     })
-  //     .on("mouseleave", function () {
-  //       const button: any = d3.select(this);
-  //       button.attr("fill", "#c7c5ba");
-  //       // button.attr('fill', 'yellow');
-  //     });
-
-  //   buttonGroup.select(".button.action-0").on("click", (d) => {
-  //     this.setState({
-  //       selectedGraph: d,
-  //       showGraphModal: true,
-  //     });
-  //   });
-
-  //   buttonGroup.select(".button.action-1").on("click", (d) => this.showAddGraph());
-
-  //   buttonGroup.select(".button.action-2").on("click", (d) => this.showAddLink());
-
-  //   buttonGroup.select(".button.action-3").on("click", (d: any) => {
-  //     confirm({
-  //       centered: true,
-  //       title: `Do you want to delete ${d.name}?`,
-  //       onOk: async () => await this.removeGraph(d),
-  //     });
-  //   });
-  // }
-
-  // public removeButtonGroup(graph: any) {
-  //   graph.select("#buttonGroup").remove();
-  // }
-
   public updateSimulation() {
-    console.log("updateSimulation gets invoked");
     const { links, graphs } = this.state;
+    links.splice(0, links.length);
+    graphs.splice(0, graphs.length);
     const graphsEl = d3.select(".graphs");
     const linksEl = d3.select(".links");
 
@@ -599,8 +484,7 @@ class VisualEditor extends Component<any, InternalState> {
     link.exit().remove();
     const linkEnter = this.createLink(link);
     link = linkEnter.merge(link);
-
-    this.simulation.graphs(graphs).on("tick", () => this.handleTick(link, graph));
+    this.simulation.nodes(graphs).on("tick", () => this.handleTick(link, graph));
     this.simulation.force("link").links(links);
     this.simulation.alpha(1).restart();
   }
@@ -610,51 +494,6 @@ class VisualEditor extends Component<any, InternalState> {
     this.setState({ showAddLinkModal: true });
   }
 
-  // // TODO: need to do
-  // public handleAddLinkOk() {
-  //   // const { newLink } = this.state;
-  //   // console.log(newLink);
-  // }
-
-  // // Add link
-  // public async addLink(source: number | string, target: number | string, relative: string) {
-  //   try {
-  //     const link = {
-  //       source,
-  //       target,
-  //       relative,
-  //     };
-  //     const { data } = await ApiService.postLink(link);
-  //     const links = this.state.links.concat([data]);
-
-  //     this.setState({ links: this.formatLinks(links) }, () => this.updateSimulation());
-  //     this.handleAddLinkCancel(false);
-  //     message.success("Add Link Success");
-  //   } catch (err) {
-  //     //message.error(err.message);
-  //   }
-  // }
-
-  // public handleAddLinkChange(value: any) {
-  //   this.setState({
-  //     newLink: {
-  //       ...this.state.newLink,
-  //       relative: value,
-  //     },
-  //   });
-  // }
-
-  // public handleAddLinkCancel(visible: boolean) {
-  //   this.setState({
-  //     showAddLinkModal: visible,
-  //     newLink: {
-  //       id: 0,
-  //       source: null,
-  //       target: null,
-  //       relative: "",
-  //     },
-  //   });
-  // }
 
   public showAddGraph() {
     this.setState({ showAddGraphModal: true });
@@ -729,50 +568,6 @@ class VisualEditor extends Component<any, InternalState> {
     this.setState({ showGraphModal: visible });
   }
 
-  // // Update links list
-  // public async handleLinkOk() {
-  //   const { selectedLink } = this.state;
-
-  //   try {
-  //     const { id, value, source, target, relative } = selectedLink;
-  //     const params = {
-  //       id,
-  //       value,
-  //       source: source.id,
-  //       target: target.id,
-  //       relative,
-  //     };
-
-  //     await ApiService.patchLink(id, params);
-
-  //     const links = this.state.links.map((item) => {
-  //       if (item.id === selectedLink.id) {
-  //         return selectedLink;
-  //       }
-  //       return item;
-  //     });
-
-  //     this.setState({ links }, () => this.updateSimulation());
-  //     this.handleLinkCancel(false);
-  //     message.success("Update Link Success");
-  //   } catch (err) {
-  //     // message.error(err.message);
-  //   }
-  // }
-
-  // public handleLinkChange(value: any) {
-  //   const { selectedLink } = this.state;
-  //   this.setState({
-  //     selectedLink: {
-  //       ...selectedLink,
-  //       relative: value,
-  //     },
-  //   });
-  // }
-
-  // public handleLinkCancel(visible: boolean) {
-  //   this.setState({ showLinkModal: visible });
-  // }
 
   public async removeGraph(graph: any) {
     const { graphs, links } = this.state;
@@ -799,15 +594,6 @@ class VisualEditor extends Component<any, InternalState> {
 
   public render() {
     const {
-      scale,
-      selectedGraph,
-      selectedLink,
-      showAddGraphModal,
-      showGraphModal,
-      showLinkModal,
-      showAddLinkModal,
-      addGraphLoading,
-      editGraphLoading,
     } = this.state;
 
     if (this.state.loading) {
@@ -816,41 +602,11 @@ class VisualEditor extends Component<any, InternalState> {
 
     return (
       <Content className="visual-editor">
-        {/* <TopTools scale={scale} showAddGraph={() => this.showAddGraph()} /> */}
         <div
           id="Neo4jContainer"
           className="visual-editor-container"
           onClick={(e: SyntheticEvent) => this.restartSimulation(e)}
         />
-        {/*Will use these*/}
-        {/* <GraphModal
-          title="Add Graph"
-          loading={addGraphLoading}
-          visible={showAddGraphModal}
-          onOk={(graph: Graph) => this.handleAddGraphOk(graph)}
-          onCancel={(visible: boolean) => this.handleAddGraphCancel(visible)}
-        />
-        <GraphModal
-          title="Edit Graph"
-          visible={showGraphModal}
-          data={selectedGraph}
-          loading={editGraphLoading}
-          onOk={(graph: Graph) => this.handleGraphOk(graph)}
-          onCancel={(visible: boolean) => this.handleGraphCancel(visible)}
-        /> */}
-        {/* <LinkModal
-          title="Add Link"
-          visible={showAddLinkModal}
-          onOk={() => this.handleAddLinkOk()}
-          onCancel={(visible: boolean) => this.handleAddLinkCancel(visible)}
-        />
-        <LinkModal
-          title="Edit Link"
-          visible={showLinkModal}
-          data={selectedLink}
-          onOk={() => this.handleLinkOk()}
-          onCancel={(visible: boolean) => this.handleLinkCancel(visible)}
-        /> */}
       </Content>
     );
   }

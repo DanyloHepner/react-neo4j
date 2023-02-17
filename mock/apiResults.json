@@ -510,6 +510,7 @@
                   "date_entree":"2016-05-17",
                   "date_sortie":"0000-00-00",
                   "date_sortie_calcule":"0000-00-00",
+                  "denomination": "SCI 232 CHARCOT2222",
                   "actif":"1",
                   "id":"16554",
                   "img":"man.svg",
