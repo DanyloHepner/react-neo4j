@@ -69,22 +69,6 @@ class VisualEditor extends Component<any, InternalState> {
   }
 
 
-  //removes the id if it already exists 
-  //adds a new id into this.state.have2collapse
-  public chkCollapseOrNot(obj: any) {
-    const id: String = obj.id;
-    console.log(id);
-    const { have2collapse } = this.state;
-    let index: number;
-    if ((index = have2collapse.indexOf(id)) > -1) {
-      console.log("will be removed again so that user can see the children nodes of it");
-      have2collapse.splice(index, 1);
-    } else {
-      console.log("will be added to array so that user can't see the children nodes of it");
-      have2collapse.push(id);
-    }
-    return obj;
-  }
 
   public async componentDidMount() {
     const { data: graphs } = await ApiService.fetchGraphs();
@@ -92,8 +76,13 @@ class VisualEditor extends Component<any, InternalState> {
     this.setState({ all_graphs: graphs });
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
+      this.defineGraphsAndLinks();
       this.initSimulation(el!, graphs, this.formatLinks());
     });
+  }
+
+  public componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<InternalState>, snapshot?: any): void {
+    console.log("componentDidUpdate gets invoked");
   }
 
   public initSimulation(el: any, graphs: any[], links: any[]) {
@@ -186,12 +175,15 @@ class VisualEditor extends Component<any, InternalState> {
     svg.on("dblclick.zoom", null); // 静止双击缩放
   }
 
-  public formatLinks() {
-
+  public defineGraphsAndLinks() {
+    console.log(this.state.have2collapse);
     const { links, all_graphs, graphs } = this.state;
-    all_graphs.map(graph => {
-      d3.hierarchy(graph).descendants().forEach(graph => {
+    //temporary code for checking if it works although remove the children nodes of whole graph
 
+    all_graphs.map(graph => {
+      console.log(d3.hierarchy(graph))
+      d3.hierarchy(graph).descendants().forEach(graph => {
+        
         if (graph.children) graph.children.forEach(child => {
           links.push({
             target: graph.data.id,
@@ -209,8 +201,12 @@ class VisualEditor extends Component<any, InternalState> {
       })
     })
 
-    graphs.splice(0, 1);
+    if(graphs[0].date_immatriculation)
+      graphs.splice(0, 1);
+  }
 
+  public formatLinks() {
+    const {links} = this.state;
     if (!links || !(links && links.length > 0)) {
       return [];
     }
@@ -451,21 +447,28 @@ class VisualEditor extends Component<any, InternalState> {
     // });
 
     graph.on("click", (d: any, i: number, n: any[]) => {
-      console.log("Clicked");
-      const { have2collapse } = this.state;
-      this.chkCollapseOrNot(d);
-      console.log(have2collapse);
 
-      if (!d3.event.defaultPrevented) {
-        if (d.children) {
-          d._children = d.children;
-          d.children = null;
-        } else {
-          d.children = d._children;
-          d._children = null;
-        }
+      const id: String = d.id;
+      const { have2collapse, graphs } = this.state;
+      let index: number;
+      if ((index = have2collapse.indexOf(id)) > -1) {
+        console.log("will be removed again so that user can see the children nodes of it");
+        have2collapse.splice(index, 1);
+      } else {
+        console.log("will be added to array so that user can't see the children nodes of it");
+        have2collapse.push(id);
       }
-      console.log(d);
+      console.log(have2collapse);
+      this.forceUpdate();
+      // if (!d3.event.defaultPrevented) {
+      //   if (d.children) {
+      //     d._children = d.children;
+      //     d.children = null;
+      //   } else {
+      //     d.children = d._children;
+      //     d._children = null;
+      //   }
+      // }
     });
 
     graph.on("contextmenu", (d: any, i: number, n: any[]) => {
@@ -580,6 +583,7 @@ class VisualEditor extends Component<any, InternalState> {
   // }
 
   public updateSimulation() {
+    console.log("updateSimulation gets invoked");
     const { links, graphs } = this.state;
     const graphsEl = d3.select(".graphs");
     const linksEl = d3.select(".links");
@@ -812,7 +816,7 @@ class VisualEditor extends Component<any, InternalState> {
 
     return (
       <Content className="visual-editor">
-        <TopTools scale={scale} showAddGraph={() => this.showAddGraph()} />
+        {/* <TopTools scale={scale} showAddGraph={() => this.showAddGraph()} /> */}
         <div
           id="Neo4jContainer"
           className="visual-editor-container"
