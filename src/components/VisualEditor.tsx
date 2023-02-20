@@ -63,32 +63,33 @@ class VisualEditor extends Component<any, InternalState> {
   public async componentDidMount() {
     const { data: graphs } = await ApiService.fetchGraphs();
     // const { data: links } = await ApiService.fetchLinks();
-    this.setState({ all_graphs: graphs });
-    this.setState({ copy_all_graphs: [...this.state.all_graphs] });
+    this.setState({ all_graphs: [...graphs] });
+    this.setState(state => ({ copy_all_graphs: [...state.all_graphs] }));
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
       this.defineGraphsAndLinks();
-      console.log(graphs);
       this.initSimulation(el!, graphs, this.formatLinks());
     });
   }
 
   public componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<InternalState>, snapshot?: any): void {
     if (prevState.collapsedArray_changed !== this.state.collapsedArray_changed) {
-      this.setState((state) => {
+      this.setState(state => {
+        console.log("setting state again")
         return {all_graphs: [...state.copy_all_graphs]};
-      });
-      this.state.all_graphs[0].children = null;
-      // this.traverseGraph(this.state.all_graphs[0]);
-      const graphs = d3.hierarchy(this.state.all_graphs[0]).descendants();
-      const el = document.getElementById("Neo4jContainer");
-      this.defineGraphsAndLinks();
-      this.initSimulation(el!, graphs, this.formatLinks());
+      }, () => {
+        console.log("after setting state");
+        this.traverseGraph(this.state.all_graphs[0]);
+        const graphs = d3.hierarchy(this.state.all_graphs[0]).descendants();
+        const el = document.getElementById("Neo4jContainer");
+        this.defineGraphsAndLinks();
+        this.initSimulation(el!, graphs, this.formatLinks());
+      })
     }
   }
 
   public traverseGraph(d: any) {
-    
+    console.log(d);
   }
 
   public initSimulation(el: any, graphs: any[], links: any[]) {
@@ -185,7 +186,6 @@ class VisualEditor extends Component<any, InternalState> {
     let { links, all_graphs, graphs, copy_all_graphs } = this.state;
     // links = [];
     // graphs = [];
-    copy_all_graphs = [...all_graphs];
     all_graphs.map(graph => {
       d3.hierarchy(graph).descendants().map(graph => {
 
@@ -201,7 +201,8 @@ class VisualEditor extends Component<any, InternalState> {
           denomination: graph.data.Nodedata.denomination,
           img: graph.data.Nodedata.img,
           short_libelle_fonction: graph.data.short_libelle_fonction,
-          color: graph.data.Nodedata.color
+          color: graph.data.Nodedata.color,
+          children: graph.data.children
         })
       })
     })
