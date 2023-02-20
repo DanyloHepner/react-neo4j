@@ -75,11 +75,10 @@ class VisualEditor extends Component<any, InternalState> {
   public componentDidUpdate(prevProps: Readonly<any>, prevState: Readonly<InternalState>, snapshot?: any): void {
     if (prevState.collapsedArray_changed !== this.state.collapsedArray_changed) {
       this.setState(state => {
-        console.log("setting state again")
         return {all_graphs: [...state.copy_all_graphs]};
       }, () => {
-        console.log("after setting state");
         this.traverseGraph(this.state.all_graphs[0]);
+        console.log(this.state.all_graphs[0]);
         const graphs = d3.hierarchy(this.state.all_graphs[0]).descendants();
         const el = document.getElementById("Neo4jContainer");
         this.defineGraphsAndLinks();
@@ -90,6 +89,18 @@ class VisualEditor extends Component<any, InternalState> {
 
   public traverseGraph(d: any) {
     console.log(d);
+    if(d.children === undefined) {
+      return ;
+    }
+    if(this.state.collapsedArray.indexOf(d.id) > -1) {
+      d.children = null;
+      return;
+    }
+    else {
+      for(let i = 0; i < d.children; i ++) {
+        this.traverseGraph(d.chidren[i]); 
+      }
+    }
   }
 
   public initSimulation(el: any, graphs: any[], links: any[]) {
