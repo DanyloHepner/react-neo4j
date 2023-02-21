@@ -62,6 +62,7 @@ class VisualEditor extends Component<any, InternalState> {
 
   public async componentDidMount() {
     const { data: graphs } = await ApiService.fetchGraphs();
+    console.log(graphs);
     // const { data: links } = await ApiService.fetchLinks();
     this.setState({ all_graphs: [...graphs] });
     this.setState(state => ({ copy_all_graphs: [...state.all_graphs] }));
@@ -79,20 +80,20 @@ class VisualEditor extends Component<any, InternalState> {
       }, () => {
         this.traverseGraph(this.state.all_graphs[0]);
         console.log(this.state.all_graphs[0]);
-        const a_graph = d3.hierarchy(this.state.all_graphs[0]).descendants();
-        console.log(a_graph);
+        // const a_graph = d3.hierarchy(this.state.all_graphs[0]).descendants();
+        // console.log(a_graph);
         const el = document.getElementById("Neo4jContainer");
-        this.defineGraphsAndLinks(a_graph);
+        this.defineGraphsAndLinks(this.state.all_graphs);
         console.log(this.state.graphs);
-        this.initSimulation(el!, this.state.graphs, this.formatLinks());
+        this.updateSimulation();
+        // this.initSimulation(el!, this.state.graphs, this.formatLinks());
       })
     }
   }
 
   public traverseGraph(d: any) {
     console.log(d.children);
-    if(d.children === undefined) {
-      console.log("function is gonna be finished, ok?");
+    if(d.children === undefined || d.children === null) {
       return ;
     }
     if(this.state.collapsedArray.indexOf(d.id) > -1) {
@@ -199,6 +200,8 @@ class VisualEditor extends Component<any, InternalState> {
   public defineGraphsAndLinks(a_graph: any[]) {
     let { links, graphs } = this.state;
     this.setState({graphs: [], links: []});
+    console.log(graphs, links);
+    debugger;
     a_graph.map(graph => {
       d3.hierarchy(graph).descendants().map(graph => {
 
@@ -483,22 +486,41 @@ class VisualEditor extends Component<any, InternalState> {
     links.splice(0, links.length);
     graphs.splice(0, graphs.length);
     const graphsEl = d3.select(".graphs");
+    console.log(graphsEl);
+    debugger;
     const linksEl = d3.select(".links");
-
+    console.log(linksEl);
+    debugger;
     // Update graph
     let graph = graphsEl.selectAll(".graph").data(graphs, (d: any) => d);
     graph.exit().remove();
+    console.log(graph);
+    debugger;
     const graphEnter = this.createGraph(graph);
+    console.log(graphEnter);
+    debugger;
     graph = graphEnter.merge(graph);
+    console.log(graph);
+    debugger;
 
     // Update link
     let link = linksEl.selectAll(".link").data(links, (d: any) => d);
     link.exit().remove();
+    console.log(link);
+    debugger;
     const linkEnter = this.createLink(link);
+    console.log(linkEnter);
+    debugger;
     link = linkEnter.merge(link);
+    console.log(link);
+    debugger;
     this.simulation.nodes(graphs).on("tick", () => this.handleTick(link, graph));
+    console.log(link, graph);
+    debugger;
     this.simulation.force("link").links(links);
+    debugger;
     this.simulation.alpha(1).restart();
+    debugger;
   }
 
   // Add new link
