@@ -67,7 +67,7 @@ class VisualEditor extends Component<any, InternalState> {
     this.setState(state => ({ copy_all_graphs: [...state.all_graphs] }));
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
-      this.defineGraphsAndLinks();
+      this.defineGraphsAndLinks(graphs);
       this.initSimulation(el!, graphs, this.formatLinks());
     });
   }
@@ -79,17 +79,20 @@ class VisualEditor extends Component<any, InternalState> {
       }, () => {
         this.traverseGraph(this.state.all_graphs[0]);
         console.log(this.state.all_graphs[0]);
-        const graphs = d3.hierarchy(this.state.all_graphs[0]).descendants();
+        const a_graph = d3.hierarchy(this.state.all_graphs[0]).descendants();
+        console.log(a_graph);
         const el = document.getElementById("Neo4jContainer");
-        this.defineGraphsAndLinks();
-        this.initSimulation(el!, graphs, this.formatLinks());
+        this.defineGraphsAndLinks(a_graph);
+        console.log(this.state.graphs);
+        this.initSimulation(el!, this.state.graphs, this.formatLinks());
       })
     }
   }
 
   public traverseGraph(d: any) {
-    console.log(d);
+    console.log(d.children);
     if(d.children === undefined) {
+      console.log("function is gonna be finished, ok?");
       return ;
     }
     if(this.state.collapsedArray.indexOf(d.id) > -1) {
@@ -97,8 +100,8 @@ class VisualEditor extends Component<any, InternalState> {
       return;
     }
     else {
-      for(let i = 0; i < d.children; i ++) {
-        this.traverseGraph(d.chidren[i]); 
+      for(let i = 0; i < d.children.length; i ++) {
+        this.traverseGraph(d.children[i]); 
       }
     }
   }
@@ -193,11 +196,10 @@ class VisualEditor extends Component<any, InternalState> {
     svg.on("dblclick.zoom", null); // 静止双击缩放
   }
 
-  public defineGraphsAndLinks() {
-    let { links, all_graphs, graphs, copy_all_graphs } = this.state;
-    // links = [];
-    // graphs = [];
-    all_graphs.map(graph => {
+  public defineGraphsAndLinks(a_graph: any[]) {
+    let { links, graphs } = this.state;
+    this.setState({graphs: [], links: []});
+    a_graph.map(graph => {
       d3.hierarchy(graph).descendants().map(graph => {
 
         if (graph.children) graph.children.forEach(child => {
@@ -220,8 +222,6 @@ class VisualEditor extends Component<any, InternalState> {
 
     if (graphs[0].date_immatriculation)
       graphs.splice(0, 1);
-
-    all_graphs = [...copy_all_graphs];
   }
 
   public formatLinks() {
