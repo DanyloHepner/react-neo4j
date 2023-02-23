@@ -68,7 +68,7 @@ class VisualEditor extends Component<any, InternalState> {
     this.setState(state => ({ copy_all_graphs: [...state.all_graphs] }));
     this.setState({ loading: false, graphs }, () => {
       const el = document.getElementById("Neo4jContainer");
-      this.defineGraphsAndLinks(graphs);
+      this.defineGraphsAndLinks();
       this.initSimulation(el!, graphs, this.formatLinks());
     });
   }
@@ -78,15 +78,16 @@ class VisualEditor extends Component<any, InternalState> {
       this.setState(state => {
         return {all_graphs: [...state.copy_all_graphs]};
       }, () => {
+        console.log(this.state.collapsedArray);
+        this.setState(state => ({
+          all_graphs: state.copy_all_graphs
+        }));
         this.traverseGraph(this.state.all_graphs[0]);
-        console.log(this.state.all_graphs[0]);
         // const a_graph = d3.hierarchy(this.state.all_graphs[0]).descendants();
-        // console.log(a_graph);
         const el = document.getElementById("Neo4jContainer");
-        this.defineGraphsAndLinks(this.state.all_graphs);
-        console.log(this.state.graphs);
-        this.updateSimulation();
-        // this.initSimulation(el!, this.state.graphs, this.formatLinks());
+        this.defineGraphsAndLinks();
+        // this.updateSimulation();
+        this.initSimulation(el!, this.state.graphs, this.formatLinks());
       })
     }
   }
@@ -180,7 +181,6 @@ class VisualEditor extends Component<any, InternalState> {
   }
 
   public onZoom(svg: any) {
-    // 鼠标滚轮缩放
     svg.call(
       d3.zoom().on("zoom", () => {
         const { transform } = d3.event;
@@ -194,15 +194,17 @@ class VisualEditor extends Component<any, InternalState> {
         d3.selectAll("#Neo4jContainer > svg > g").attr("transform", transform);
       })
     );
-    svg.on("dblclick.zoom", null); // 静止双击缩放
+    svg.on("dblclick.zoom", null); 
   }
 
-  public defineGraphsAndLinks(a_graph: any[]) {
-    let { links, graphs } = this.state;
-    this.setState({graphs: [], links: []});
+  public defineGraphsAndLinks() {
+    let { links, graphs, all_graphs } = this.state;
+    graphs.splice(0);
+    links.splice(0);
+    console.log(all_graphs);
     console.log(graphs, links);
-    debugger;
-    a_graph.map(graph => {
+    
+    all_graphs.map(graph => {
       d3.hierarchy(graph).descendants().map(graph => {
 
         if (graph.children) graph.children.forEach(child => {
@@ -223,8 +225,8 @@ class VisualEditor extends Component<any, InternalState> {
       })
     })
 
-    if (graphs[0].date_immatriculation)
-      graphs.splice(0, 1);
+    console.log(graphs, links);
+    
   }
 
   public formatLinks() {
@@ -481,46 +483,62 @@ class VisualEditor extends Component<any, InternalState> {
     arrow.append("path").attr("d", arrowPath).attr("fill", "#A5ABB6");
   }
 
+  public graphShouldHide(d: any) {
+    const {collapsedArray} = this.state;
+    if(collapsedArray.indexOf(d.id) > -1) {
+      return true;
+    }
+    return false;
+  }
+
+  public linkShouldHide(d: any) {
+    const {collapsedArray} = this.state;
+    if(collapsedArray.indexOf(d.target) > -1) {
+      return true;
+    }
+    return false;
+  }
+
   public updateSimulation() {
     const { links, graphs } = this.state;
     links.splice(0, links.length);
     graphs.splice(0, graphs.length);
     const graphsEl = d3.select(".graphs");
     console.log(graphsEl);
-    debugger;
+    
     const linksEl = d3.select(".links");
     console.log(linksEl);
-    debugger;
+    
     // Update graph
-    let graph = graphsEl.selectAll(".graph").data(graphs, (d: any) => d);
+    let graph = graphsEl.selectAll(".graph").data(graphs, (d: any) => this.graphShouldHide(d) ? d : null);
     graph.exit().remove();
     console.log(graph);
-    debugger;
+    
     const graphEnter = this.createGraph(graph);
     console.log(graphEnter);
-    debugger;
+    
     graph = graphEnter.merge(graph);
     console.log(graph);
-    debugger;
+    
 
     // Update link
-    let link = linksEl.selectAll(".link").data(links, (d: any) => d);
+    let link = linksEl.selectAll(".link").data(links, (d: any) => this.linkShouldHide(d) ? d : null);
     link.exit().remove();
     console.log(link);
-    debugger;
+    
     const linkEnter = this.createLink(link);
     console.log(linkEnter);
-    debugger;
+    
     link = linkEnter.merge(link);
     console.log(link);
-    debugger;
+    
     this.simulation.nodes(graphs).on("tick", () => this.handleTick(link, graph));
     console.log(link, graph);
-    debugger;
+    
     this.simulation.force("link").links(links);
-    debugger;
+    
     this.simulation.alpha(1).restart();
-    debugger;
+    
   }
 
   // Add new link
