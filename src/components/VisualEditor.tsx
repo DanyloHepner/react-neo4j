@@ -85,9 +85,10 @@ class VisualEditor extends Component<any, InternalState> {
         this.traverseGraph(this.state.all_graphs[0]);
         // const a_graph = d3.hierarchy(this.state.all_graphs[0]).descendants();
         const el = document.getElementById("Neo4jContainer");
+        
         this.defineGraphsAndLinks();
-        // this.updateSimulation();
         this.initSimulation(el!, this.state.graphs, this.formatLinks());
+        this.updateSimulation();
       })
     }
   }
